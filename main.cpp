@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string>
-#include "headers.h"
+#include "checkers.hpp"
 
 int main(){
-    begin();
+    checkers checker;
+    checker.begin();
     return 0;
 }
 
