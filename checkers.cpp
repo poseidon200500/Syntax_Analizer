@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -17,6 +19,8 @@ struct name {
     type attr2;
     type attr3;
 } ;
+
+cout << "Строка " << line_ind << ": " << endl;
 имена аттрибутов не могут повторяться, но могут совпадать с именем структуры.
 
 */
@@ -33,7 +37,7 @@ int checkers::begin(){
         cerr << "Файл не найден" << endl;
         return -1;
     }
-    cout << "Файл найден" << endl;
+    cout << "Файл найден\n" << endl;
     find_line();
     return 0;
 }
@@ -41,7 +45,7 @@ int checkers::begin(){
 int checkers::find_line(){
     string word;
     char last = ' ';
-    int flag = 0, index;
+    int flag = 0;
     do{
         getline(file,line);
         line_ind++;
@@ -53,12 +57,14 @@ int checkers::find_line(){
             index = find_struct(last);
             if (index >= 0){
                 flag = 1;
-                cout << "В строке " << line_ind << " найдена структура с началом имени в " << index << endl;
+                cout << "Строка " << line_ind << ": найдена структура с началом имени в " << index << endl;
+                
+                is_initialization();
                 //is_initialization(index);
             } else {
-                cout <<"В строке " << line_ind << " структура не подходит, код ошибки " << index << endl;
+                cout << "Строка " << line_ind << ": структура не подходит, код ошибки " << index << endl;
             }
-            cout << line << endl;
+            //cout << line << endl;
         }
 
     } while (!file.eof());
@@ -96,43 +102,46 @@ int checkers::find_struct(char last){
     return -4;
 }
 
-int checkers::is_initialization(int beginning){
-    char c;
-    int index = beginning;
+int checkers::is_initialization(){
+    int len = line.length();
+    //printf("%c %d\n",line[beginning],line[beginning]);
     int countr = 0;
-    do{                 //пропускаем пробелы
-        file >> c;
+    word = "";
+    while (index < len && (isalnum(line[index]) || line[index] == '_') && countr < 255){
+        word.push_back(line[index]);
         index++;
-    } while(c == ' ');
-    while (c != EOF && (isalnum(c) || c == '_') && countr < 255){
-        word.push_back(c);
-        file >> c;
         countr++;
     }
-    while (c == ' ' || c == '\n'){
-        if (c == '\n')  line_ind++;
-        file >> c;
+    
+    while (index < len && (line[index] == ' ' || line[index] == '\n' || line[index] == '\t')){
+        if (line[index] == '\n')  line_ind++;
+        index++;
     }
+    cout << "Имя = " << word << endl;
     if (countr == 0){
-        cerr << "ОШИБКА: Имя структуры не указано" << endl;
+        cerr << "Строка " << line_ind << ": ОШИБКА: Имя структуры не указано" << endl;
     }else if(countr >= 255){
-        cerr << "ОШИБКА: Имя структуры слишком большое" << endl;
+        cerr << "Строка " << line_ind << ": ОШИБКА: Имя структуры слишком большое" << endl;
     } else if (is_good_name() < 0){
         ;//ошибка уже будет выведена
-    } else if (c == ';'){
-        cout << "struct " << word << ";" << "не является обьявлением структуры" << endl;
-    } else if (c != '{'){
-        cerr << "ОШИБКА: Ожидалось \"{\", но после имени идёт " << c << endl;
+    } else if (line[index] == ';'){
+        cout << "Строка " << line_ind << ": struct " << word << ";" << " не является обьявлением структуры" << endl;
+    } else if (line[index] != '{'){
+        cerr << "Строка " << line_ind << ": ОШИБКА: Ожидалось \"{\", но после имени идёт " << line[index] << endl;
     } else {
         //имя нормальное, после него есть {
-        //while (is_good_attr());
         cout << "Ура, пока всё хорошо" << endl;
+        cout << "now char = \'" << line[index] << "\'" << endl;
+    
+        is_good_attr();
+        cout << endl;
     }
+
     return 0;
 }
 
 
-//it works
+
 int checkers::is_good_name(){
     vector<string> forbidden = {"auto","break","case","char","const","continue","default","do","double","else","enum",
     "extern","float","for","goto","if","inline","int","long","register","restrict","return",
@@ -141,58 +150,126 @@ int checkers::is_good_name(){
     int output_code = 0;
     for (unsigned int i = 0; i< forbidden.size();i++){
         if (word == forbidden[i]){
-            cerr << "ОШИБКА: Имя " << word << " является зарезервированным и не может быть использовано" << endl;
+            cerr << "Строка " << line_ind << ": ОШИБКА: Имя " << word << " является зарезервированным и не может быть использовано" << endl;
             output_code = -1;
         }
     }
     if (!output_code && isdigit(word[0])){
-        cerr << "ОШИБКА: Имя " << word << " начинается с цифры и не может быть использовано" << endl;
+        cerr << "Строка " << line_ind << ": ОШИБКА: Имя " << word << " начинается с цифры и не может быть использовано" << endl;
         output_code = -2;
     }
     for (unsigned int i = 0; !output_code && i < word.size();i++){
         if (!( isalnum(word[i]) || word[i] == '_')){
-            cerr << "ОШИБКА: Имя " << word << " содержит недопустимые символы и не может быть использовано" << endl;
+            cerr << "Строка " << line_ind << ": ОШИБКА: Имя " << word << " содержит недопустимые символы и не может быть использовано" << endl;
             output_code = -3;
         }
     }
-
+    if (output_code != 0){
+        struct_result = -1;
+    }
     return output_code;
 }
 
-/*иди нафиг
--1 -- output
-0-3 -- modifier
-4-7 -- type
-*/
-//
 int checkers::is_good_type(){
-    int rez = 0;
-    vector<string> types = {"char","int","float","double"};
-    if (word[0] == '{'){
-        rez = 10;
-        word.erase(0,1);
-    } else if (word[0] == ';'){
-        rez = 20;
-        word.erase(0,1);
-    }
-
+    int res = 0;
+    vector<string> types = {"char","int","float","double","char*","int*","float*","double*"};
     for (unsigned int i = 0; i < types.size(); i++){
-        if (word == types[i])   rez+=i+1;
+        if (word == types[i])   res+=i+1;
     }
 
-    if ( rez % 10 == 0)  rez = -1;
-
-    return rez;
+    cout << " Полученный тип это " << word << endl; 
+    if (line[index] != ' '){
+        cout << "Строка " << line_ind << ": ОШИБКА: Недопустимый символ при определении типа " << line[index] << endl;
+        res = -1;
+    } else if (word.length() >= 7 || res == 0){
+        cout << " Строка " << line_ind << ": ОШИБКА: Неправильное название базового типа " << word << endl;
+        res = -1;
+    }
+    return res;
 }
 
-// int checkers::is_good_attr(){
-//     char letter;
-//     int rez = 0;
-//     file >> letter;
-//     while (letter )
-//     return 0;
-// }
+int checkers::is_next_end(){
+    big_pass_tab();
+    if (line[index] == '}'){
+        cout << "Я нашёл скобку!!!!!" << endl;
+        if (attr_cout == 0){
+            cout << "Строка " << line_ind << ": ОШИБКА: в структуре отсутствуют атрибуты" << endl;
+        } else if (struct_result != 0) {
+            cout << "Обьявление структуры содержит ошибки" << endl;
+        } else {
+            cout << "Обьявление структуры правильное" << endl;
+        }
+    }
+}
 
+int checkers::is_good_attr(){
+    cout << endl;
+    index++; // ?
+    is_next_end();
+    //получение типа
+    get_word();
+    // а теперь проверяем имя типа
+    is_good_type();
+    pass_tab();
+    //получение и проверка имени атрибута
+    get_word();
+    pass_tab();
+    check_name();
+    big_pass_tab();
+    if (line[index] == '}' || res != 0){
+        //cout << "Я нашёл скобку!!!!!" << endl;
+        return res;
+    } else {
+        attr_cout++;
+        is_good_attr();
+    }
+
+    return res;
+}
+
+void checkers::pass_tab(){
+    while (line[index] == ' ' || line[index] == '\t'){
+        index++;
+    }
+}
+
+void checkers::big_pass_tab(){
+    while (line[index] == ' ' || line[index] == '\t' || line[index] == '\n' || index == (int)line.length()-1){
+        if (line[index] == '\n' || index == (int)line.length()-1){
+            getline(file,line);
+            index = 0;
+            line_ind++;
+        } else {
+            index++;
+        }
+    }
+}
+
+
+void checkers::get_word(){
+    word = "";
+    int countr = 0;
+    while (line[index] != ' ' && line[index] != ';' && line[index] != '}' && line[index] != '\n' && countr < 256){
+        word.push_back(line[index]);
+        index++;
+        countr++;
+    }
+}
+
+void checkers::check_name(){
+    if (line[index] != ';'){
+        cout << "Строка " << line_ind << ": ОШИБКА: Отсутствует ; при определении поля структуры " << line[index] << endl;
+        struct_result = -1;
+    } else if (word.length() >= 256 || is_good_name()){
+        cout << "Строка " << line_ind << ": ОШИБКА: Неправильное имя базового типа " << word << endl;
+        struct_result = -1;
+    }
+    if (struct_result == 0){
+        cout << "Строка " << line_ind << ": имя " << word << " правильное" << endl;
+        //cout << "Строка " << line_ind << ": содержит правильное определение поля структуры" << endl;
+        pass_tab();
+    }
+}
 
 
 // int main(){

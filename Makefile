@@ -6,6 +6,7 @@ MEM= -fsanitize
 rebuild: clean all
 
 all:
+	clear
 	$(CC) $(FLAGS) -o main.exe checkers.cpp main.cpp
 	./main.exe
 clean:
