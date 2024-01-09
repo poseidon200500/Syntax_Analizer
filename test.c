@@ -10,13 +10,14 @@ struct test {
 struct test2{
     int c;
     char s;
-    struct test10
-    {
-        int aaa;
-    };
+
     
 };
 
+struct test10
+    {
+        int aaa;
+    };
 }; {
 struct       test3;
 // ;struct test3;
