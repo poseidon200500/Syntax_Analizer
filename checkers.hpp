@@ -9,6 +9,7 @@ using namespace std;
 
 class checkers {
   ifstream file;
+  vector<string> attr_names = {};
   string word = "";
   string line = "";
   int index = 0;

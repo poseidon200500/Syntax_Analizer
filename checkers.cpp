@@ -58,7 +58,7 @@ int checkers::find_line() {
         flag = 1;
         cout << "Строка " << line_ind
              << ": найдена структура с началом имени в " << index << endl;
-
+        clear_attrs();
         is_initialization();
         // is_initialization(index);
       } else {
@@ -138,8 +138,9 @@ int checkers::is_initialization() {
   } else {
     //имя нормальное, после него есть {
     // cout << "Ура, пока всё хорошо" << endl;
-    // cout << "now char = \'" << line[index] << "\'" << endl;
-    clear_attrs();
+    word = "";
+    attr_names = {};
+    //clear_attrs();
     is_good_attr();
     cout << endl;
   }
@@ -148,6 +149,7 @@ int checkers::is_initialization() {
 }
 
 void checkers::clear_attrs() {
+  vector<string> attr_names = {};
   struct_result = 0;
   attr_cout = 0;
   word = "";
@@ -171,6 +173,16 @@ int checkers::is_good_name() {
       output_code = -1;
     }
   }
+  for (unsigned int i = 0; i < attr_names.size(); i++) {
+    if (word == attr_names[i]) {
+      cerr << "Строка " << line_ind << ": ОШИБКА: Имя " << word
+           << " уже было использовано"
+           << endl;
+      
+      output_code = -1;
+    }
+  }
+  
   if (!output_code && isdigit(word[0])) {
     cerr << "Строка " << line_ind << ": ОШИБКА: Имя " << word
          << " начинается с цифры и не может быть использовано" << endl;
@@ -253,7 +265,10 @@ int checkers::is_good_attr() {
   get_word();
   check_name();
   attr_cout++;
-  is_good_attr();
+  if (struct_result == 0){
+    attr_names.push_back(word);
+    is_good_attr();
+  }
   return struct_result;
 }
 

@@ -1,7 +1,7 @@
 struct test{
     int a;
     char b;
-    int* c;
+    int* cc;
 
 };
 
